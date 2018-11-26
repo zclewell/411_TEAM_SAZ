@@ -1,0 +1,146 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <link rel="stylesheet" href="https://cdn.rawgit.com/openlayers/openlayers.github.io/master/en/v5.2.0/css/ol.css" type="text/css">
+    <style>
+      .map {
+        height: 600px;
+        width: 600px;
+      }
+    </style>
+    <script src="https://cdn.rawgit.com/openlayers/openlayers.github.io/master/en/v5.2.0/build/ol.js"></script>
+    <title>OpenLayers example</title>
+  </head>
+  <body>
+    <h2>Map</h2>
+    <div align="center">
+    <div id="map" class="map"></div>
+    </div>
+    <script type="text/javascript">
+    
+ 
+        var osmSource = new ol.source.OSM()
+        
+        var projection = ol.proj.get('EPSG:900913');
+        var tileGrid = ol.tilegrid.createXYZ({
+          extent: projection.getExtent(),
+          tileSize: 64,
+          maxZoom: 15,
+          minZoom: 15
+        });
+        
+        var source = new ol.source.Vector({wrapX: false});
+
+        var vector = new ol.layer.Vector({
+            source: source
+        });
+        
+        var center = [-87.62, 41.88];
+        var centerProj = ol.proj.fromLonLat(center);
+        
+        var map = new ol.Map({
+            target: 'map',
+            layers: [
+              new ol.layer.Tile({
+                source: osmSource
+              }),
+              
+              vector
+              
+              /*new ol.layer.Tile({
+                source: new ol.source.TileDebug({
+                projection: projection,
+                tileGrid: tileGrid
+                })
+              })*/
+            ],
+            view: new ol.View({
+              center: centerProj,
+              zoom: 12
+            })
+        });
+      
+      
+        var draw; 
+        
+        function addInteraction() {
+            geometryFunction = ol.interaction.Draw.createBox();
+          
+            draw = new ol.interaction.Draw({
+                source: source,
+                type: 'Circle',
+                geometryFunction: geometryFunction
+            });
+            map.addInteraction(draw);
+        }
+      
+        addInteraction();
+        
+        
+        var imageStyle = new ol.style.Style({
+            image: new ol.style.Circle({
+              radius: 5,
+              fill: new ol.style.Fill({color: 'yellow'}),
+              stroke: new ol.style.Stroke({color: 'red', width: 1})
+            })
+        });
+      
+        var n = 50;
+        var omegaTheta = 30000; // Rotation period in ms
+        var R = 7e6;
+        var r = 2e6;
+        var p = 2e6;
+        
+        var boxCoord = [[0, 0], [0.002, 0.002]];
+        
+        boxCoord[0][0] += centerProj[0];
+        boxCoord[0][1] += centerProj[1];
+        boxCoord[1][0] += centerProj[0];
+        boxCoord[1][1] += centerProj[1];
+        
+        map.on('postcompose', function(event) {
+            var vectorContext = event.vectorContext;
+            var frameState = event.frameState;
+            var theta = 2 * Math.PI * frameState.time / omegaTheta;
+            var coordinates = [];
+            var i;
+            for (i = 0; i < n; ++i) {
+              var t = theta + 2 * Math.PI * i / n;
+              var x = (1.5 + Math.sin(t * 5) * 0.5) * r * Math.cos(t);
+              var y = (1.5 + Math.sin(t * 5) * 0.5) * r * Math.sin(t);
+              coordinates.push([x * 0.002 + centerProj[0], y * 0.002 + centerProj[1]]);
+            }
+            vectorContext.setStyle(imageStyle);
+            /*
+            var feature = new ol.Feature({
+              geometry: new ol.geom.Polygon([coordinates])
+              //: new ol.geom.Point(centerProj),
+              //name: 'My Polygon'
+            });*/
+            
+            
+            
+            //vectorContext.drawGeometry(geometry);
+            
+            vectorContext.drawGeometry(new ol.geom.MultiPoint(coordinates));
+            
+            vectorContext.drawPoint(new ol.geom.Point(centerProj));
+            vectorContext.drawGeometry(new ol.geom.Polygon(coordinates));
+            
+            /*
+            var headPoint = new Point(coordinates[coordinates.length - 1]);
+    
+            vectorContext.setStyle(headOuterImageStyle);
+            vectorContext.drawGeometry(headPoint);
+    
+            vectorContext.setStyle(headInnerImageStyle);
+            vectorContext.drawGeometry(headPoint);
+            */
+            map.render();
+        });
+        map.render();
+        
+      
+    </script>
+  </body>
+</html>
