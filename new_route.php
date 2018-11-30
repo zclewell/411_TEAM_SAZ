@@ -37,6 +37,10 @@
       }
    </style>
    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.4.2/css/all.css" integrity="sha384-/rXc/GQVaYpyDdyxK+ecHPVYJSN9bmVFBvjA/9eOB+pb3F2w2N6fc5qB9Ew5yIns" crossorigin="anonymous">
+   
+   <script src="https://cdn.rawgit.com/openlayers/openlayers.github.io/master/en/v5.2.0/build/ol.js"></script>
+
+   
    </head>
    
    <body bgcolor="#f2f7f9">
@@ -55,6 +59,114 @@
        <div style = "font-size:11px; color:#cc0000; margin-top:10px"><?php echo $error; ?></div>
 
        </div>
+       
+       <div align="center">
+        <div id="map" class="map"></div>
+        </div>
+    <script type="text/javascript">
+    
+ 
+        var osmSource = new ol.source.OSM()
+        
+        var projection = ol.proj.get('EPSG:900913');
+        var tileGrid = ol.tilegrid.createXYZ({
+          extent: projection.getExtent(),
+          tileSize: 64,
+          maxZoom: 15,
+          minZoom: 15
+        });
+        
+        var source = new ol.source.Vector({wrapX: false});
+
+        var vector = new ol.layer.Vector({
+            source: source
+        });
+        
+        var center = [-87.62, 41.88];
+        var centerProj = ol.proj.fromLonLat(center);
+        
+        var map = new ol.Map({
+            target: 'map',
+            layers: [
+              new ol.layer.Tile({
+                source: osmSource
+              }),
+              
+              vector
+              
+              /*new ol.layer.Tile({
+                source: new ol.source.TileDebug({
+                projection: projection,
+                tileGrid: tileGrid
+                })
+              })*/
+            ],
+            view: new ol.View({
+              center: centerProj,
+              zoom: 12
+            })
+        });
+      
+        
+      
+       
+        
+        
+        
+        map.on('postcompose', function(event) {
+            var vectorContext = event.vectorContext;
+            var frameState = event.frameState;
+            var i;
+            
+           
+            
+            
+            
+            
+            
+            var coordinates0 = JSON.parse( '<?php echo json_encode($point_arr) ?>' );
+            
+            
+            
+            
+            for(i = 0; i < coordinates0.length; i++)
+            {
+                var newPoint = ol.proj.fromLonLat([
+                parseFloat(coordinates0[i][3]), 
+                parseFloat(coordinates0[i][2])
+                ]);
+                
+                
+                
+                var curRed = 0; //scores0[i] / maxScore * 255;
+                
+                //document.getElementById("debug").innerHTML = maxScore;
+                
+                var imageStyle = new ol.style.Style({
+                    image: new ol.style.Circle({
+                      radius: 7,
+                      fill: new ol.style.Fill({color: new Array(curRed, 255 - curRed, 255 - curRed * 2, 1.0)}),
+                      stroke: new ol.style.Stroke({color: 'red', width: 1})
+                    })
+                });
+                
+                vectorContext.setStyle(imageStyle);
+                vectorContext.drawGeometry(new ol.geom.Point(newPoint));
+            }
+            
+            
+            //document.getElementById("debug").innerHTML = coordinates;
+            
+            
+            map.render();
+        });
+        map.render();
+        
+      
+    </script>
+    
+       
+       
    </body>
    
 </html>

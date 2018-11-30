@@ -1,7 +1,11 @@
 import MySQLdb
 import csv
 
-db = MySQLdb.connect(host='localhost', user='teamsaz411_root', passwd='thisisapassword', db='teamsaz411_chicageo')
+db_login_f = open('secrets')
+usern = db_login_f.readline()
+passwd = db_login_f.readline()
+
+db = MySQLdb.connect(host='localhost', user=usern, passwd='thisisapassword', db='teamsaz411_chicageo')
 
 cursor = db.cursor()
 
@@ -19,4 +23,6 @@ with open('chi_crime.csv', 'r') as crime_csv:
         db.commit()
 
 db.close()
+
+db_login_f.close()
 
